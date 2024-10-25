@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Data Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #data { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <h1>MQTT Data</h1>
+
+    <div id="data">
+        <h3>Location Data</h3>
+        <p id="warning" style="color: red; font-weight: bold; display: none;">Waiting for GPS...</p>
+        <p><strong>Latitude:</strong> <span id="latitude"></span></p>
+        <p><strong>Longitude:</strong> <span id="longitude"></span></p>
+        <p><strong>Altitude:</strong> <span id="altitude"></span></p>
+        <p><strong>HDOP:</strong> <span id="hdop"></span></p>
+    </div>
+
+    <script>
+        // Connect to WebSocket server
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = () => {
+            console.log('Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+            const { data } = JSON.parse(event.data);
+            updateDataDisplay(data);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        // Update data display with latitude, longitude, altitude, and hdop or warning message
+        function updateDataDisplay(data) {
+            // Access the warning message if it exists in the JSON structure
+            const warningMessage = data?.uplink_message?.decoded_payload?.warnings?.[0]?.message?.[0];
+            
+            // Check if the warning message matches the specific GPS waiting message
+            if (warningMessage === "Warning: RadioLib v1.1.0 experiment device: Waiting for GPS") {
+                // Display the warning message and hide location data
+                document.getElementById("warning").style.display = 'block';
+                clearLocationData(); // Clear existing data fields
+            } else {
+                // Hide the warning message
+                document.getElementById("warning").style.display = 'none';
+
+                // Extract location data only if available
+                const location = data?.uplink_message?.decoded_payload
+                
+
+                // Only set data if it's available
+                document.getElementById("latitude").textContent = location?.latitude || "";
+                document.getElementById("longitude").textContent = location?.longitude || "";
+                document.getElementById("altitude").textContent = location?.altitude || "";
+                document.getElementById("hdop").textContent = location?.hdop || "";
+            }
+        }
+
+        // Helper function to clear data fields
+        function clearLocationData() {
+            document.getElementById("latitude").textContent = "";
+            document.getElementById("longitude").textContent = "";
+            document.getElementById("altitude").textContent = "";
+            document.getElementById("hdop").textContent = "";
+        }
+    </script>
+
+</body>
+</html>
