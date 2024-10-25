@@ -55,7 +55,6 @@
 
                 // Extract location data only if available
                 const location = data?.uplink_message?.decoded_payload
-                
 
                 // Only set data if it's available
                 document.getElementById("latitude").textContent = location?.latitude || "";
